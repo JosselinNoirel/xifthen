@@ -1,0 +1,493 @@
+\documentclass{article}
+
+\usepackage{etex}
+\usepackage{xifthen}
+\usepackage[ascii]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[warn]{textcomp}
+\usepackage[a4paper, pdftex, margin=1.5in]{geometry}
+\usepackage{lmodern}
+\usepackage{typetex}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{url}
+\usepackage[bottom,hang]{footmisc}
+\usepackage[babel]{csquotes}
+\usepackage[british]{babel}
+\usepackage{hyperref}
+
+\setcounter{secnumdepth}{-\maxdimen}
+
+\makeatletter
+\newcommand*{\1}{$_1\m@th$}
+\newcommand*{\2}{$_2\m@th$}
+
+% Borrowed from doc.sty
+\newcommand*{\getfileinfo}[1]{%
+  \def \filename {#1}%
+  \def \@tempb ##1 ##2 ##3\relax ##4\relax {%
+    \def \filedate    {##1}%
+    \def \fileversion {##2}%
+    \def \fileinfo    {##3}%
+  }%
+  \edef \@tempa {\csname ver@#1\endcsname}%
+  \expandafter \@tempb \@tempa \relax ? ? \relax \relax
+}
+\makeatother
+
+\newenvironment*{texdescription}{%
+  \list{}{%
+    \setlength{\labelwidth}{0pt}%
+    \setlength{\itemindent}{-\leftmargin}%
+    \setlength{\itemsep}{0pt}%
+    \renewcommand*{\makelabel}[1]%
+      {\hspace{\labelsep}\normalfont\tex{\texmonospaces ##1}}%
+  }%
+}{%
+  \endlist
+}
+
+\newcommand*{\pack}{\textsf}
+\newcommand*{\true}{\emph{true}}
+\newcommand*{\false}{\emph{false}}
+
+\newtest \condition [2]{%
+  \cnttest{(#1)*(#2)}>{100}%
+  \AND
+  \cnttest{((#1)+(#2))*2}<{60}%
+}
+
+\getfileinfo{xifthen.sty}
+\title  {The \pack{xifthen} package}
+\author {Josselin Noirel\footnote{This document corresponds to version
+  \fileversion\ (\filedate) of \pack{\filename}.}\\\url{http://www.jnoirel.fr/}}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+  This package implements new commands that can be used within the
+  first argument of \pack{ifthen}'s \cmd{ifthenelse} to test whether a
+  string is void or not, if a command is defined or equivalent to
+  another.  It includes also the possibility to make use of the
+  complex expressions introduced by the package~\pack{calc}, together
+  with the ability of defining new commands to handle complex tests.
+  This package requires the \eTeX{} features.
+\end{abstract}
+
+\tableofcontents
+
+\section{What's new}
+
+\begin{itemize}
+\item [1.1] Now \cmd{cnttest} and \cmd{dimtest} accept \tex{<=} and \tex{>=}.
+\item I~renamed \cmd{terminateswith} in \cmd{endswith}.
+
+\addvspace{\baselineskip}
+
+\item [1.2] Corrected a~bug related to a~bad interaction between
+  new~tests and ifthen's replacement macro (credits go to MPG \&
+  P.~Albar\`ede).
+
+\addvspace{\baselineskip}
+
+\item [1.3] Removed a spurious space (thanks to Ulrike Fisher).
+\end{itemize}
+
+\section{\pack{ifthen}'s interface}
+
+\subsection{Declaring and setting booleans}
+
+You can declare boolean (presumably in the preamble of your document) with
+%
+\begin{texcode}
+\cmd[syntax,1]{newboolean}{boolean}
+\end{texcode}
+%
+where \meta{boolean} is a name made up of alphanumeric characters.
+For instance, 
+%
+\begin{texcode}
+\cmd[1]{newboolean}{appendix} \newline
+\cmd[1]{newboolean}{first}
+\end{texcode}
+%
+Then your boolean is ready to be set with
+%
+\begin{texcode}
+\cmd[syntax,2]{setboolean}{boolean}{truth value}
+\end{texcode}
+%
+where \meta{truth value} can be \tex{true} or \tex{false}.
+
+\subsection{Executing conditional code}
+
+The general syntax is inherited of that of the package~\pack{ifthen}:
+%
+\begin{texcode}
+  \cmd[syntax,3]{ifthenelse}{test expression}{true code}{false code}
+\end{texcode}
+%
+Evaluates the \meta{test expression} and executes \meta{true code} if the
+test turns out to be true and \meta{false code} otherwise.  \pack{ifthen}
+provides the tests explained in the next paragraphs.
+
+\paragraph{Value of a~boolean}
+
+You can use the value of a~boolean you declared, or the value of
+a~primitive boolean of \TeX\footnote{The primitive booleans include:
+  \tex{mmode} (Are we in math mode?), \tex{hmode} (Are we in
+  horizontal mode?), \tex{vmode} (Are we in vertical mode?),~etc.}
+%
+\begin{texcode}
+  \cmd[syntax,1]{boolean}{boolean}
+\end{texcode}
+
+\paragraph{Tests on integers}
+
+To test whether an~integer is equal to, strictly less than, or
+strictly greater than, you write the expression straightforwardly.
+%
+\begin{texlist}
+\item \meta{value\1} = \meta{value\2}
+\item \meta{value\1} < \meta{value\2}
+\item \meta{value\1} > \meta{value\2}
+\item \cmd[syntax,1]{isodd}{number}
+\end{texlist}
+
+\paragraph{Tests on lengths}
+
+There exist similar tests for the lengths, but you need in this case
+to surround the whole expression with \cmd{lengthtest}.
+%
+\begin{texlist}
+\item \cmd[1]{lengthtest}{\meta{dimen\1} = \meta{dimen\2}}
+\item \cmd[1]{lengthtest}{\meta{dimen\1} < \meta{dimen\2}}
+\item \cmd[1]{lengthtest}{\meta{dimen\1} > \meta{dimen\2}}
+\end{texlist}
+
+\paragraph{Tests on commands}
+ 
+You can test if a command is undefined\footnote{This test differs from
+  \cmd{@ifundefined} in that it takes a~real command---and not
+  a~command name---as argument, and also in that command which is let
+  equal to \cmd{relax} is not considered undefined.}.
+%
+\begin{texcode}
+\cmd{isundefined} \meta{command}
+\end{texcode}
+
+\paragraph{Tests on character strings}
+
+You want to know whether two character strings are equal?  Use:
+%
+\begin{texcode}
+\cmd[syntax,2]{equal}{string\1}{string\2}
+\end{texcode}
+%
+Remark that the two arguments are fully expanded.  In other words, it
+is the result of the expansion of the macros that is compared.  This
+behaviour also entails a~moving argument and you should protect
+fragile command to avoid bizarre errors.\footnote{Practically, the
+  fact that the content is expanded, means that if the macro \cmd{bar}
+  is defined as \cmd[1]{baz}{o}, and the command \cmd{baz} is defined
+  as \tex{f\#1\#1}, then \cmd[2]{equal}{\cmd{bar}}{foo} turns out to
+  be true, because \cmd{bar} eventually leads to \tex{foo}.  This is
+  usually the wanted behaviour.}
+
+\paragraph{Building more elaborated expressions}
+
+You can build more sophisticated expressing using the \cmd{AND}
+(conjunction), \cmd{OR} (disjunction), and \cmd{NOT} (negation)
+operators\footnote{Lowercase versions of these commands also exist but
+  we advise the user to stick to the uppercase ones because \cmd{or}
+  is part of \TeX's syntax.}.
+%
+\begin{texlist}
+\item \meta{expression\1} \cmd{AND}  \meta{expression\2}
+\item \meta{expression\1} \cmd{OR} \ \meta{expression\2}
+\item \cmd{NOT} \meta{expression}
+\end{texlist}
+%
+The evaluation is lazy, meaning that if you write
+%
+\begin{texcode}
+\meta{expression\1} \cmd{AND} \meta{expression\2}
+\end{texcode}
+%
+then \meta{expression\2} won't be evaluated if \meta{expression\1} is
+true\footnote{The evil is in the details: \pack{ifthen} works by
+  reading its argument twice.  The tests are evaluated on the second
+  pass, but and expansion is performed on the first one, regardless of
+  the truth value.  So that, quite surprisingly, the following test
+  fails:
+  %
+  \begin{texcode}
+    \cmd{NOT} \cmd[1]{isundefined}{\cmd{foo}} \cmd{AND}
+    \cmd[2]{equal}{\cmd{foo}}{\<string\>}
+  \end{texcode}
+}.
+
+There is not precedence rules: the argument is read from left to right
+and \cmd{NOT} applies to the very next test.  When the precedence must
+be changed you can use the parentheses:
+%
+\begin{texcode}
+\cmd{(}\meta{expression}\cmd{)}
+\end{texcode}
+
+\section{New tests}
+
+After this brief review of \pack{ifthen}'s principles, we introduce
+the new tests provided by \pack{xifthen}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\paragraph{Tests on integers}
+
+One of the drawback of \TeX's tests and of \cmd{ifthen}'s as well, is
+the impossibility to use \pack{calc}'s syntax in it.  The
+\cmd{numexpr} primitive of \eTeX\ somehow allows to overcome this
+difficulty but it is not well documented and normal users are
+certainly more familiar with the capabilities offered by \pack{calc}.
+The \pack{xifthen} package allows to use \pack{calc}-valid expressions
+via the new test \cmd{cnttest}.  The syntax is as follows:
+%
+\begin{texcode}
+  \cmd{cnttest}\marg{counter expression\1}\marg{comparison}%
+               \marg{counter expression\2}
+\end{texcode}
+%
+It evaluates the two counter expressions, compares them, and returns
+the value of the test.  The comparison can be one of the following
+sequences \tex{<}, \tex{>}, \tex{=}, \tex{<=},~or~\tex{>=}.
+
+\paragraph{Tests on lengths}
+
+The similar test has been designed for the lengths and dimensions:
+%
+\begin{texcode}
+  \cmd{dimtest}\marg{dimen expression\1}\marg{comparison}%
+               \marg{dimen expression\2}
+\end{texcode}
+%
+It evaluates the two dimension expressions, compares them, and returns
+the value of the test.  The comparison can be one of the following
+sequences \tex{<}, \tex{>}, \tex{=}, \tex{<=},~or~\tex{>=}.
+
+\paragraph{Tests on commands}
+
+We define a~companion of \cmd{isundefined} that uses a~command name
+rather than a~command\footnote{If you are stuck with the distinction
+  between `command' and `command name', let me explain it further with
+  an example: the command name of the command \cmd{foo} is \tex{foo}.
+  This is sometimes more convenient to use the command name than the
+  name.  Still, this functionality is probably intended more for
+  experienced programmers who want to use the niceties of
+  \pack{ifthen} and \pack{xifthen}.}.
+%
+\begin{texcode}
+  \cmd[1,syntax]{isnamedefined}{command name}
+\end{texcode}
+%
+Returns \true\ if the command \cmd{\meta{command name}} is defined\footnote{%
+  Uses \tex{\cmd{ifcsname}\dots\allowbreak\cmd{endcsname}} internally
+  and not \cmd{@ifundefined}.}.
+
+Sometimes, you need to compare two macros \cmd{foo} and \cmd{bar} and
+test whether they are actually the same macro.
+%
+\begin{texcode}
+  \cmd[syntax,2]{isequivalentto}{command\1}{command\2}
+\end{texcode}
+%
+Corresponds to the \cmd{ifx} test: it returns \true\ when the two
+commands are exactly equivalent (same definition, same number of
+arguments, same prefixes, etc., otherwise \false\ is returned).
+
+\paragraph{Tests on character strings}
+
+Very often, we see people using \cmd[2]{equal}{\#1}{} in their command
+definitions (for instance, to test whether an optional argument had
+been passed to their macro).  A~more efficient test can be used:
+%
+\begin{texcode}
+  \cmd[syntax,1]{isempty}{content}
+\end{texcode}
+%
+Returns \true\ if \meta{content} is empty.  It is essentially equivalent to
+\tex{\cmd[2]{equal}{\meta{content}}{}} except that the argument of
+\cmd{isempty} isn't expanded and therefore isn't affected by fragile
+commands\footnote{Internally, it uses \cmd{unexpanded} and \pack{ifmtarg}.}.
+
+It is possible to test whether a~substring appears within another
+string\footnote{Uses \cmd{in@} and \cmd{ifin@} internally.}.
+%
+\begin{texcode}
+  \cmd[syntax,2]{isin}{substring}{string}
+\end{texcode}
+
+Sometimes, you need to check whether a~string ends with a particular
+substring.  This can be achieved using\footnote{For compatibility
+  reasons, there exist a~command unfortunately called
+  \cmd{terminateswith} that performs the same test but it is
+  deprecated.}:
+%
+\begin{texcode}
+  \cmd[syntax,2]{endswith}{string}{substring}
+\end{texcode}
+
+\paragraph{Building more elaborated expressions}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+It is then possible to create new tests with:
+%
+\begin{texcode}
+  \cmd[syntax,3]{newtest}{command}[$n$]{test expression}
+\end{texcode}
+%
+Surprisingly, a~simple \cmd{newcommand} would not work.  The
+\cmd{newtest} macro defines a command \meta{command} taking
+$n$~arguments (no optional argument is allowed\footnote{No optional
+  argument is allowed because the macro needs to be expanded in the
+  first pass and that optional arguments avoid that.} consisting of
+the test as specified by \meta{test expression} that can be used in
+the argument of \cmd{ifthenelse}.
+
+\section{Examples}
+
+Let's illustrate the most important features of \pack{xifthen} with
+the following problem: if we want to test whether a rectangle having
+dimensions $l$~and~$L$ meets the two following conditions: $S = l
+\times\nobreak L > 100$ and~$P = 2 (l +\nobreak L) < 60$\footnote{Note
+  that, because within the arguments of \cmd{cnttest} the \pack{calc}
+  is used, you must use real parentheses \tex{(}~and~\tex{)} and not
+  \cmd{(}~and~\cmd{)}.}:
+%
+\begin{texcode}
+\cmd{newtest}\{\cmd{condition}\}[2]\{\%\newline
+\ \ \cmd{cnttest}\{(\#1)*(\#2)\}>\{100\}\%\newline
+\ \ \cmd{AND}\newline
+\ \ \cmd{cnttest}\{((\#1)+(\#2))*2\}<\{60\}\%\newline
+\}
+\end{texcode}
+%
+Then \tex{\cmd{ifthenelse}\{\cmd{condition}\{14\}\{7\}\}\{TRUE\}\{FALSE\}}
+returns \ifthenelse{\condition{14}{7}}{TRUE}{FALSE} because $14\times 7 =
+98$ and $2\times (14 +\nobreak 7) = 42$, while
+\tex{\cmd{ifthenelse}\{\cmd{condition}\{11\}\{11\}\}\{TRUE\}\allowbreak
+  \{FALSE\}} returns \ifthenelse{\condition{11}{11}}{TRUE}{FALSE} because
+$11 \times 11 = 121$ and $2\times (11 +\nobreak 11) = 44$.
+
+\bigbreak
+
+Now a~list of typical uses of \pack{xifthen}'s capabilities:
+
+\small
+\begin{list}{}{\setlength{\leftmargin}{0pt}%
+               \setlength{\rightmargin}{-\oddsidemargin}%
+               \setlength{\partopsep}{0pt}%
+               \setlength{\topsep}{\medskipamount}%
+               \setlength{\parsep}{0pt}}%
+\item \newcommand*{\TRUE}{%
+    \ifthenelse{\equal{\csname f@family\endcsname}{lmtt}}{true}%
+      {\makebox[\widthof{false}][l]{\bfseries true}}%
+  }
+      \newcommand*{\FALSE}{false}
+      \newcommand*{\pt}{\ifmmode \,\mathrm{pt}\else pt\fi}
+
+$4 - 1< 4$: \ifthenelse{\cnttest{4 - 1}{<}{4}}{\TRUE}{\FALSE}\quad
+$4< 4$:     \ifthenelse{\cnttest{4}{<}{4}}{\TRUE}{\FALSE}\quad
+$4 + 1< 4$: \ifthenelse{\cnttest{4 + 1}{<}{4}}{\TRUE}{\FALSE}
+
+$4 - 1\leq 4$: \ifthenelse{\cnttest{4 - 1}{<=}{4}}{\TRUE}{\FALSE}\quad
+$4\leq 4$:     \ifthenelse{\cnttest{4}{<=}{4}}{\TRUE}{\FALSE}\quad
+$4 + 1\leq 4$: \ifthenelse{\cnttest{4 + 1}{<=}{4}}{\TRUE}{\FALSE}
+
+$4 - 1= 4$: \ifthenelse{\cnttest{4 - 1}{=}{4}}{\TRUE}{\FALSE}\quad
+$4= 4$:     \ifthenelse{\cnttest{4}{=}{4}}{\TRUE}{\FALSE}\quad
+$4 + 1= 4$: \ifthenelse{\cnttest{4 + 1}{=}{4}}{\TRUE}{\FALSE}
+
+$4 - 1\geq 4$: \ifthenelse{\cnttest{4 - 1}{>=}{4}}{\TRUE}{\FALSE}\quad
+$4\geq 4$:     \ifthenelse{\cnttest{4}{>=}{4}}{\TRUE}{\FALSE}\quad
+$4 + 1\geq 4$: \ifthenelse{\cnttest{4 + 1}{>=}{4}}{\TRUE}{\FALSE}
+
+$4 - 1> 4$: \ifthenelse{\cnttest{4 - 1}{>}{4}}{\TRUE}{\FALSE}\quad
+$4> 4$:     \ifthenelse{\cnttest{4}{>}{4}}{\TRUE}{\FALSE}\quad
+$4 + 1> 4$: \ifthenelse{\cnttest{4 + 1}{>}{4}}{\TRUE}{\FALSE}
+
+\medskip
+
+$4\pt - 1\pt< 4\pt$: \ifthenelse{\dimtest{4\pt - 1\pt}{<}{4\pt}}{\TRUE}{\FALSE}\quad
+$4\pt< 4\pt$:     \ifthenelse{\dimtest{4\pt}{<}{4\pt}}{\TRUE}{\FALSE}\quad
+$4\pt + 1\pt< 4\pt$: \ifthenelse{\dimtest{4\pt + 1\pt}{<}{4\pt}}{\TRUE}{\FALSE}
+
+$4\pt - 1\pt\leq 4\pt$: \ifthenelse{\dimtest{4\pt - 1\pt}{<=}{4\pt}}{\TRUE}{\FALSE}\quad
+$4\pt\leq 4\pt$:     \ifthenelse{\dimtest{4\pt}{<=}{4\pt}}{\TRUE}{\FALSE}\quad
+$4\pt + 1\pt\leq 4\pt$: \ifthenelse{\dimtest{4\pt + 1\pt}{<=}{4\pt}}{\TRUE}{\FALSE}
+
+$4\pt - 1\pt= 4\pt$: \ifthenelse{\dimtest{4\pt - 1\pt}{=}{4\pt}}{\TRUE}{\FALSE}\quad
+$4\pt= 4\pt$:     \ifthenelse{\dimtest{4\pt}{=}{4\pt}}{\TRUE}{\FALSE}\quad
+$4\pt + 1\pt= 4\pt$: \ifthenelse{\dimtest{4\pt + 1\pt}{=}{4\pt}}{\TRUE}{\FALSE}
+
+$4\pt - 1\pt\geq 4\pt$: \ifthenelse{\dimtest{4\pt - 1\pt}{>=}{4\pt}}{\TRUE}{\FALSE}\quad
+$4\pt\geq 4\pt$:     \ifthenelse{\dimtest{4\pt}{>=}{4\pt}}{\TRUE}{\FALSE}\quad
+$4\pt + 1\pt\geq 4\pt$: \ifthenelse{\dimtest{4\pt + 1\pt}{>=}{4\pt}}{\TRUE}{\FALSE}
+
+$4\pt - 1\pt> 4\pt$: \ifthenelse{\dimtest{4\pt - 1\pt}{>}{4\pt}}{\TRUE}{\FALSE}\quad
+$4\pt> 4\pt$:     \ifthenelse{\dimtest{4\pt}{>}{4\pt}}{\TRUE}{\FALSE}\quad
+$4\pt + 1\pt> 4\pt$: \ifthenelse{\dimtest{4\pt + 1\pt}{>}{4\pt}}{\TRUE}{\FALSE}
+
+\medskip
+
+\tex{\cmd{ifthenelse}\{\cmd{isempty}\{\}\}\{\TRUE\}\{\FALSE\}}
+\ifthenelse{\isempty{}}{\TRUE}{\FALSE}
+
+\tex{\cmd{ifthenelse}\{\cmd{isempty}\{ \}\}\{\TRUE\}\{\FALSE\}}
+\ifthenelse{\isempty{ }}{\TRUE}{\FALSE}
+
+\tex{\cmd{ifthenelse}\{\cmd{isempty}\{ foo \}\}\{\TRUE\}\{\FALSE\}}
+\ifthenelse{\isempty{ foo }}{\TRUE}{\FALSE}
+
+\medskip
+
+\tex{\cmd{ifthenelse}\{\cmd{endswith}\{foo.\}\{.\}\}\{\TRUE\}\{\FALSE\}}
+\ifthenelse{\endswith{foo.}{.}}{\TRUE}{\FALSE}
+
+\tex{\cmd{ifthenelse}\{\cmd{endswith}\{foo!\}\{.\}\}\{\TRUE\}\{\FALSE\}}
+\ifthenelse{\endswith{foo!}{.}}{\TRUE}{\FALSE}
+
+\medskip
+
+\tex{\cmd{ifthenelse}\{\cmd{isin}\{foo\}\{foobar\}\}\{\TRUE\}\{\FALSE\}}
+\ifthenelse{\isin{foo}{foobar}}{\TRUE}{\FALSE}
+
+\tex{\cmd{ifthenelse}\{\cmd{isin}\{Foo\}\{foobar\}\}\{\TRUE\}\{\FALSE\}}
+\ifthenelse{\isin{Foo}{foobar}}{\TRUE}{\FALSE}
+
+\medskip
+
+\tex{\cmd{ifthenelse}\{\cmd{cnttest}\{10 * 10 + 1\}>\{100\}\}\{\TRUE\}\{\FALSE\}}
+\ifthenelse{\cnttest{10 * 10 + 1}>{100}}{\TRUE}{\FALSE}
+
+\tex{\cmd{ifthenelse}\{\cmd{cnttest}\{10 * 10 + 1\}>\{100 * 100\}\}\{\TRUE\}\{\FALSE\}}
+\ifthenelse{\cnttest{10 * 10 + 1}>{100 * 100}}{\TRUE}{\FALSE}
+
+\medskip
+
+\tex{\cmd{ifthenelse}\{\cmd{isequivalentto}\{\cmd{usepackage}\}\{\cmd{RequirePackage}\}\}\{\TRUE\}\{\FALSE\}}
+\ifthenelse{\isequivalentto{\usepackage}{\RequirePackage}}{\TRUE}{\FALSE}
+
+\tex{\cmd{ifthenelse}\{\cmd{isequivalentto}\{\cmd{usepackage}\}\{\cmd{textit}\}\}\{\TRUE\}\{\FALSE\}}
+\ifthenelse{\isequivalentto{\usepackage}{\textit}}{\TRUE}{\FALSE}
+
+\medskip
+
+\tex{\cmd{ifthenelse}\{\cmd{isnamedefined}\{@foo\}\}\{\TRUE\}\{\FALSE\}}
+\ifthenelse{\isnamedefined{@foo}}{\TRUE}{\FALSE}
+
+\tex{\cmd{ifthenelse}\{\cmd{isnamedefined}\{@for\}\}\{\TRUE\}\{\FALSE\}}
+\ifthenelse{\isnamedefined{@for}}{\TRUE}{\FALSE}
+\end{list}
+
+\end{document}
