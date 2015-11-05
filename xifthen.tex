@@ -2,12 +2,11 @@
 
 \usepackage{etex}
 \usepackage{xifthen}
-\usepackage[ascii]{inputenc}
+\usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage[warn]{textcomp}
 \usepackage[a4paper, pdftex, margin=1.5in]{geometry}
 \usepackage{lmodern}
-\usepackage{typetex}
 \usepackage{microtype}
 \usepackage{xcolor}
 \usepackage{url}
@@ -15,6 +14,13 @@
 \usepackage[babel]{csquotes}
 \usepackage[british]{babel}
 \usepackage{hyperref}
+
+\newcommand*{\cmd}[1]{\tex{\textbackslash #1}}
+\newcommand*{\tex}{\texttt}
+\newenvironment*{texcode}{\list{}{}\item\ttfamily}{\endlist}
+\newcommand*{\marg}[1]{\{\meta{#1}\}}
+\newcommand*{\oarg}[1]{[\meta{#1}]}
+\newcommand*{\meta}[1]{\textnormal{\textlangle#1\textrangle}}
 
 \setcounter{secnumdepth}{-\maxdimen}
 
@@ -60,7 +66,8 @@
 \getfileinfo{xifthen.sty}
 \title  {The \pack{xifthen} package}
 \author {Josselin Noirel\footnote{This document corresponds to version
-  \fileversion\ (\filedate) of \pack{\filename}.}\\\url{http://www.jnoirel.fr/}}
+  \fileversion\ (\filedate) of \pack{\filename}.}\\%
+\url{https://github.com/JosselinNoirel/xifthen}}
 
 \begin{document}
 
@@ -93,6 +100,10 @@
 \addvspace{\baselineskip}
 
 \item [1.3] Removed a spurious space (thanks to Ulrike Fisher).
+
+\item [1.4.0] Removed the reliance on the \cmd{etex} package, following
+      an exmail exchange with David Carlisle and Maïeul Rouquette.
+      (I also updated the documentation and pushed the files on GitHub.)
 \end{itemize}
 
 \section{\pack{ifthen}'s interface}
@@ -102,21 +113,21 @@
 You can declare boolean (presumably in the preamble of your document) with
 %
 \begin{texcode}
-\cmd[syntax,1]{newboolean}{boolean}
+\cmd{newboolean}\marg{boolean}
 \end{texcode}
 %
 where \meta{boolean} is a name made up of alphanumeric characters.
 For instance, 
 %
 \begin{texcode}
-\cmd[1]{newboolean}{appendix} \newline
-\cmd[1]{newboolean}{first}
+\cmd{newboolean}\{appendix\}\\
+\cmd{first}\{appendix\}
 \end{texcode}
 %
 Then your boolean is ready to be set with
 %
 \begin{texcode}
-\cmd[syntax,2]{setboolean}{boolean}{truth value}
+\cmd{setboolean}\marg{boolean}\marg{truth value}
 \end{texcode}
 %
 where \meta{truth value} can be \tex{true} or \tex{false}.
@@ -126,7 +137,7 @@ where \meta{truth value} can be \tex{true} or \tex{false}.
 The general syntax is inherited of that of the package~\pack{ifthen}:
 %
 \begin{texcode}
-  \cmd[syntax,3]{ifthenelse}{test expression}{true code}{false code}
+  \cmd{ifthenelse}\marg{test expression}\marg{true code}\marg{false code}
 \end{texcode}
 %
 Evaluates the \meta{test expression} and executes \meta{true code} if the
@@ -141,7 +152,7 @@ a~primitive boolean of \TeX\footnote{The primitive booleans include:
   horizontal mode?), \tex{vmode} (Are we in vertical mode?),~etc.}
 %
 \begin{texcode}
-  \cmd[syntax,1]{boolean}{boolean}
+  \cmd{boolean}\marg{boolean}
 \end{texcode}
 
 \paragraph{Tests on integers}
@@ -149,23 +160,23 @@ a~primitive boolean of \TeX\footnote{The primitive booleans include:
 To test whether an~integer is equal to, strictly less than, or
 strictly greater than, you write the expression straightforwardly.
 %
-\begin{texlist}
-\item \meta{value\1} = \meta{value\2}
-\item \meta{value\1} < \meta{value\2}
-\item \meta{value\1} > \meta{value\2}
-\item \cmd[syntax,1]{isodd}{number}
-\end{texlist}
+\begin{list}{}{}
+\item \tex{\meta{value\1} = \meta{value\2}}
+\item \tex{\meta{value\1} < \meta{value\2}}
+\item \tex{\meta{value\1} > \meta{value\2}}
+\item \tex{\textbackslash isodd\marg{number}}
+\end{list}
 
 \paragraph{Tests on lengths}
 
 There exist similar tests for the lengths, but you need in this case
 to surround the whole expression with \cmd{lengthtest}.
 %
-\begin{texlist}
-\item \cmd[1]{lengthtest}{\meta{dimen\1} = \meta{dimen\2}}
-\item \cmd[1]{lengthtest}{\meta{dimen\1} < \meta{dimen\2}}
-\item \cmd[1]{lengthtest}{\meta{dimen\1} > \meta{dimen\2}}
-\end{texlist}
+\begin{list}{}{}
+\item \tex{\cmd{lengthtest}\{\meta{dimen\1} = \meta{dimen\2}\}}
+\item \tex{\cmd{lengthtest}\{\meta{dimen\1} < \meta{dimen\2}\}}
+\item \tex{\cmd{lengthtest}\{\meta{dimen\1} > \meta{dimen\2}\}}
+\end{list}
 
 \paragraph{Tests on commands}
  
@@ -174,27 +185,27 @@ You can test if a command is undefined\footnote{This test differs from
   a~command name---as argument, and also in that command which is let
   equal to \cmd{relax} is not considered undefined.}.
 %
-\begin{texcode}
-\cmd{isundefined} \meta{command}
-\end{texcode}
+\begin{list}{}{}
+\item \tex{\cmd{isundefined}\marg{command}}
+\end{list}
 
 \paragraph{Tests on character strings}
 
 You want to know whether two character strings are equal?  Use:
 %
 \begin{texcode}
-\cmd[syntax,2]{equal}{string\1}{string\2}
+\cmd{equal}\marg{string\1}\marg{string\2}
 \end{texcode}
 %
 Remark that the two arguments are fully expanded.  In other words, it
 is the result of the expansion of the macros that is compared.  This
 behaviour also entails a~moving argument and you should protect
-fragile command to avoid bizarre errors.\footnote{Practically, the
+fragile command to avoid bizarre errors\footnote{Practically, the
   fact that the content is expanded, means that if the macro \cmd{bar}
-  is defined as \cmd[1]{baz}{o}, and the command \cmd{baz} is defined
-  as \tex{f\#1\#1}, then \cmd[2]{equal}{\cmd{bar}}{foo} turns out to
-  be true, because \cmd{bar} eventually leads to \tex{foo}.  This is
-  usually the wanted behaviour.}
+  is defined as \tex{\cmd{baz}\{o\}}, and the command \cmd{baz} is defined
+  as \tex{f\#1\#1}, then \tex{\cmd{equal}\{\cmd{bar}\}\{foo\}} turns out to
+  be true, because \cmd{bar} eventually expands into \tex{foo}.  This is
+  usually the desired behaviour.}.
 
 \paragraph{Building more elaborated expressions}
 
@@ -204,11 +215,11 @@ operators\footnote{Lowercase versions of these commands also exist but
   we advise the user to stick to the uppercase ones because \cmd{or}
   is part of \TeX's syntax.}.
 %
-\begin{texlist}
+\begin{list}{}{}
 \item \meta{expression\1} \cmd{AND}  \meta{expression\2}
 \item \meta{expression\1} \cmd{OR} \ \meta{expression\2}
 \item \cmd{NOT} \meta{expression}
-\end{texlist}
+\end{list}
 %
 The evaluation is lazy, meaning that if you write
 %
@@ -217,17 +228,10 @@ The evaluation is lazy, meaning that if you write
 \end{texcode}
 %
 then \meta{expression\2} won't be evaluated if \meta{expression\1} is
-true\footnote{The evil is in the details: \pack{ifthen} works by
+true\footnote{The devil is in the details, however: \pack{ifthen} works by
   reading its argument twice.  The tests are evaluated on the second
-  pass, but and expansion is performed on the first one, regardless of
-  the truth value.  So that, quite surprisingly, the following test
-  fails:
-  %
-  \begin{texcode}
-    \cmd{NOT} \cmd[1]{isundefined}{\cmd{foo}} \cmd{AND}
-    \cmd[2]{equal}{\cmd{foo}}{\<string\>}
-  \end{texcode}
-}.
+  pass, but the expansion is performed on the first one, regardless of
+  the truth value.}.
 
 There is not precedence rules: the argument is read from left to right
 and \cmd{NOT} applies to the very next test.  When the precedence must
@@ -298,7 +302,7 @@ Sometimes, you need to compare two macros \cmd{foo} and \cmd{bar} and
 test whether they are actually the same macro.
 %
 \begin{texcode}
-  \cmd[syntax,2]{isequivalentto}{command\1}{command\2}
+  \cmd{isequivalentto}\marg{command\1}\marg{command\2}
 \end{texcode}
 %
 Corresponds to the \cmd{ifx} test: it returns \true\ when the two
@@ -312,11 +316,11 @@ definitions (for instance, to test whether an optional argument had
 been passed to their macro).  A~more efficient test can be used:
 %
 \begin{texcode}
-  \cmd[syntax,1]{isempty}{content}
+  \cmd{isempty}\marg{content}
 \end{texcode}
 %
 Returns \true\ if \meta{content} is empty.  It is essentially equivalent to
-\tex{\cmd[2]{equal}{\meta{content}}{}} except that the argument of
+\tex{\cmd{equal}\{\meta{content}\}\{\}} except that the argument of
 \cmd{isempty} isn't expanded and therefore isn't affected by fragile
 commands\footnote{Internally, it uses \cmd{unexpanded} and \pack{ifmtarg}.}.
 
@@ -324,7 +328,7 @@ It is possible to test whether a~substring appears within another
 string\footnote{Uses \cmd{in@} and \cmd{ifin@} internally.}.
 %
 \begin{texcode}
-  \cmd[syntax,2]{isin}{substring}{string}
+  \cmd{isin}\marg{substring}\marg{string}
 \end{texcode}
 
 Sometimes, you need to check whether a~string ends with a particular
@@ -334,7 +338,7 @@ substring.  This can be achieved using\footnote{For compatibility
   deprecated.}:
 %
 \begin{texcode}
-  \cmd[syntax,2]{endswith}{string}{substring}
+  \cmd{endswith}\marg{string}\marg{substring}
 \end{texcode}
 
 \paragraph{Building more elaborated expressions}
@@ -343,7 +347,7 @@ substring.  This can be achieved using\footnote{For compatibility
 It is then possible to create new tests with:
 %
 \begin{texcode}
-  \cmd[syntax,3]{newtest}{command}[$n$]{test expression}
+  \cmd{newtest}\marg{command}[$n$]\marg{test expression}
 \end{texcode}
 %
 Surprisingly, a~simple \cmd{newcommand} would not work.  The
@@ -365,10 +369,10 @@ dimensions $l$~and~$L$ meets the two following conditions: $S = l
   \cmd{(}~and~\cmd{)}.}:
 %
 \begin{texcode}
-\cmd{newtest}\{\cmd{condition}\}[2]\{\%\newline
-\ \ \cmd{cnttest}\{(\#1)*(\#2)\}>\{100\}\%\newline
-\ \ \cmd{AND}\newline
-\ \ \cmd{cnttest}\{((\#1)+(\#2))*2\}<\{60\}\%\newline
+\cmd{newtest}\{\cmd{condition}\}[2]\{\%\\
+\mbox{}\ \ \cmd{cnttest}\{(\#1)*(\#2)\}>\{100\}\%\\
+\mbox{}\ \ \cmd{AND}\\
+\mbox{}\ \ \cmd{cnttest}\{((\#1)+(\#2))*2\}<\{60\}\%\\
 \}
 \end{texcode}
 %
