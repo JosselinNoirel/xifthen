@@ -17,6 +17,11 @@ v1.2
 v1.3
 -  Removed a spurious space in the code.
 
+v1.4.0
+- Removed the reliance on the \cmd{etex} package, following an exmail
+  exchange with David Carlisle and Maïeul Rouquette.  (I also updated
+  the documentation and pushed the files on GitHub.)
+      
 This material is subject to the LaTeX Project Public License.
 See http://www.ctan.org/tex-archive/help/Catalogue/licenses.lppl.html
 for the details of that license.
